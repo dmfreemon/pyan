@@ -9,6 +9,8 @@
     for rendering by e.g. GraphViz or yEd.
 """
 
+import sys
+import os
 import logging
 from glob import glob
 from optparse import OptionParser  # TODO: migrate to argparse
@@ -75,10 +77,44 @@ def main():
     parser.add_option("-a", "--annotated",
                       action="store_true", default=False, dest="annotated",
                       help="annotate with module and source line number")
+    parser.add_option("--dirlist", dest="dirlist",
+                      help="read input directory list from FILE", metavar="FILE", default=None)
 
     options, args = parser.parse_args()
-    filenames = [fn2 for fn in args for fn2 in glob(fn)]
-    if len(args) == 0:
+
+    if options.dirlist is None:
+        # dirlist option is not specified
+        # we are expecting a list of directories on the command line
+        filenames = [fn2 for fn in args for fn2 in glob(fn)]
+    else:
+        print("Processing directories:", file=sys.stderr)
+        filenames = []
+        with open(options.dirlist, "r") as myfile:
+            for line in myfile:
+                s1 = line.strip()
+                if len(line) == 0:
+                    continue
+                if os.sep == '/' and line[0] == '/':
+                    # running in a unix-like environment
+                    # both dirnames and os are good to go
+                    s2 = s1 + "/*.py"
+                if os.sep == '\\' and line[0] == '/':
+                    # running on windows
+                    # dirnames are unix-like
+                    # must fix up
+                    s2 = s1.replace("/cygdrive/d", "D:").replace("/", "\\") + "\\*.py"
+
+                print(s2, file=sys.stderr)
+                filenames.extend(glob(s2))
+
+    # maybe do this someday: process all directories recursively
+    #for fn in args:
+    #    for path, dirs, files in os.walk(fn):
+    #        for name in files:
+    #            if name.endswith(".py"):
+    #                filenames.append(os.path.join(path, name))
+
+    if len(filenames) == 0:
         parser.error('Need one or more filenames to process')
 
     if options.nested_groups:
