@@ -370,6 +370,11 @@ class CallGraphVisitor(ast.NodeVisitor):
 
         tgt_name = node.module
         from_node = self.get_node_of_current_namespace()
+
+        # Handle statements of the form "from . import foo"
+        if tgt_name is None:
+            tgt_name = from_node.name
+
         to_node = self.get_node('', tgt_name, node, flavor=Flavor.MODULE)  # module, in top-level namespace
         self.logger.debug("Use from %s to ImportFrom %s" % (from_node, to_node))
         if self.add_uses_edge(from_node, to_node):
