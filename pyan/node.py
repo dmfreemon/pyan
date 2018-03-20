@@ -91,6 +91,8 @@ class Node:
         self.flavor = flavor
         self.defined = namespace is None  # assume that unknown nodes are defined
 
+        assert self.name is not None
+
     def get_short_name(self):
         """Return the short name (i.e. excluding the namespace), of this Node.
         Names of unknown nodes will include the *. prefix."""
