@@ -5,6 +5,7 @@
 import logging
 import ast
 import symtable
+import datetime
 
 from .node import Node, Flavor
 from .anutils import tail, get_module_name, format_alias, \
@@ -78,8 +79,12 @@ class CallGraphVisitor(ast.NodeVisitor):
 
     def process(self):
         """Analyze the set of files, twice so that any forward-references are picked up."""
+        num_files_to_process = len(self.filenames)
         for pas in range(2):
+            filenum = 0
             for filename in self.filenames:
+                filenum += 1
+                print(str(datetime.datetime.now()) + " pass %d, file %d of %d, %s" % (pas+1, filenum, num_files_to_process, filename))
                 self.logger.info("========== pass %d, file '%s' ==========" % (pas+1, filename))
                 self.process_one(filename)
             if pas == 0:
@@ -148,10 +153,23 @@ class CallGraphVisitor(ast.NodeVisitor):
         # those references that could not be resolved to any known name, and
         # then remove any references pointing outside the analyzed file set.
 
+        print( str(datetime.datetime.now()) + " entering expand_unknowns")
+
         self.expand_unknowns()
+
+        print( str(datetime.datetime.now()) + " entering contract_nonexistants")
+
         self.contract_nonexistents()
+
+        print( str(datetime.datetime.now()) + " entering cull_inherited")
+
         self.cull_inherited()
+
+        print( str(datetime.datetime.now()) + " entering collapse_inner")
+
         self.collapse_inner()
+
+        print( str(datetime.datetime.now()) + " exited collapse_inner")
 
     ###########################################################################
     # visitor methods
@@ -1435,8 +1453,23 @@ class CallGraphVisitor(ast.NodeVisitor):
         """For each use edge from W to X.name, if it also has an edge to W to Y.name where Y is used by X, then remove the first edge."""
 
         removed_uses_edges = []
+
+        dmfcount1 = 0
+        dmftotal1 = len(self.uses_edges)
+
         for n in self.uses_edges:
+
+            dmfcount1 += 1
+            #print("cull_inherited: outer loop1 %s of %s" % (dmfcount1, dmftotal1))
+
+            dmfcount2 = 0
+            dmftotal2 = len(self.uses_edges[n])
+
             for n2 in self.uses_edges[n]:
+
+                dmfcount2 += 1
+                print("cull_inherited: outer loop1 %s of %s outer loop2 %s of %s" % (dmfcount1, dmftotal1, dmfcount2, dmftotal2))
+
                 inherited = False
                 for n3 in self.uses_edges[n]:
                     if n3.name == n2.name and n2.namespace is not None and n3.namespace is not None and n3.namespace != n2.namespace:
