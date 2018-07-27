@@ -699,7 +699,7 @@ class CallGraphVisitor(ast.NodeVisitor):
         or None if not applicable; and flavor is a Flavor, specifically one of
         FUNCTION, METHOD, STATICMETHOD or CLASSMETHOD."""
 
-        if not isinstance(ast_node, ast.FunctionDef):
+        if not (isinstance(ast_node, ast.FunctionDef) or isinstance(ast_node, ast.AsyncFunctionDef)):
             raise TypeError("Expected ast.FunctionDef; got %s" % (type(ast_node)))
 
         # Visit decorators
